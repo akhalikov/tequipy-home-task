@@ -16,7 +16,7 @@ public interface AllocationRequestRepository extends JpaRepository<AllocationReq
     }
 
     @Query("SELECT ar FROM AllocationRequest ar " +
-        "LEFT JOIN FETCH ar.policy " +
-        "LEFT JOIN FETCH ar.allocatedEquipments WHERE ar.id = :id")
+        "LEFT JOIN FETCH ar.allocatedEquipments " +
+        "WHERE ar.id = :id")
     Optional<AllocationRequest> findByIdWithDetails(@Param("id") UUID id);
 }

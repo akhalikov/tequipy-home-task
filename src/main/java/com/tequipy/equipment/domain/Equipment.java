@@ -9,7 +9,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -63,12 +62,6 @@ public class Equipment {
     @Column(name = "purchase_date", nullable = false)
     private LocalDate purchaseDate;
 
-    @Column(name = "retired_reason")
-    private String retiredReason;
-
-    @Version
-    private Long version;
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -77,24 +70,39 @@ public class Equipment {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public void markAvailable() {
+    public boolean isSameType(EquipmentType type) {
+        return this.type == type;
+    }
+
+    public boolean isSameBrand(String brand) {
+        return this.brand.equalsIgnoreCase(brand);
+    }
+
+    public boolean hasSufficientCondition(BigDecimal requiredScore) {
+        return conditionScore.compareTo(requiredScore) >= 0;
+    }
+
+    public Equipment markAvailable() {
         if (state != ASSIGNED && state != RESERVED)
             throw new IllegalStateException("Cannot mark available in state: " + state);
 
         state = AVAILABLE;
+        return this;
     }
 
-    public void reserve() {
+    public Equipment reserve() {
         if (state != AVAILABLE)
             throw new IllegalStateException("Only available equipment can be reserved");
 
         state = RESERVED;
+        return this;
     }
 
-    public void assign() {
+    public Equipment assign() {
         if (state != RESERVED)
             throw new IllegalStateException("Only reserved equipment can be assigned");
 
         state = ASSIGNED;
+        return this;
     }
 }

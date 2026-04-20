@@ -18,8 +18,8 @@ public class EquipmentService {
     }
 
     @Transactional
-    public Equipment registerEquipment(EquipmentRegisterCommand command) {
-        return equipmentRepository.save(command.toEquipment());
+    public Equipment registerEquipment(Equipment equipment) {
+        return equipmentRepository.save(equipment);
     }
 
     @Transactional(readOnly = true)

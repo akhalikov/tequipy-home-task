@@ -17,7 +17,6 @@ public record EquipmentResponse(
     EquipmentState state,
     BigDecimal conditionScore,
     LocalDate purchaseDate,
-    String retiredReason,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) {
@@ -30,7 +29,6 @@ public record EquipmentResponse(
             equipment.getState(),
             equipment.getConditionScore(),
             equipment.getPurchaseDate(),
-            equipment.getRetiredReason(),
             equipment.getCreatedAt(),
             equipment.getUpdatedAt()
         );

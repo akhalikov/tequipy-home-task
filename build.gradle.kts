@@ -39,6 +39,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
+    implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.7.3")
     runtimeOnly("org.postgresql:postgresql")
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
@@ -46,6 +47,7 @@ dependencies {
     testRuntimeOnly("com.h2database:h2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     "testIntegrationRuntimeOnly"("com.h2database:h2")
+    "testIntegrationImplementation"("org.awaitility:awaitility:4.2.1")
 }
 
 tasks.withType<Test> {

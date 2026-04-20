@@ -1,7 +1,6 @@
 package com.tequipy.equipment.controller;
 
 import com.tequipy.equipment.domain.EquipmentType;
-import com.tequipy.equipment.service.EquipmentRegisterCommand;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -22,13 +21,4 @@ public record EquipmentRegisterRequest(
     @NotNull @PastOrPresent LocalDate purchaseDate
 ) {
 
-    public EquipmentRegisterCommand toCommand() {
-        return EquipmentRegisterCommand.builder()
-            .type(this.type)
-            .brand(this.brand)
-            .model(this.model)
-            .conditionScore(this.conditionScore)
-            .purchaseDate(this.purchaseDate)
-            .build();
-    }
 }

@@ -1,5 +1,6 @@
 package com.tequipy.equipment.controller;
 
+import com.tequipy.equipment.domain.Equipment;
 import com.tequipy.equipment.domain.EquipmentState;
 import com.tequipy.equipment.service.EquipmentService;
 import jakarta.validation.Valid;
@@ -29,7 +30,15 @@ public class EquipmentController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public EquipmentResponse registerEquipment(@Valid @RequestBody EquipmentRegisterRequest request) {
-        return EquipmentResponse.from(equipmentService.registerEquipment(request.toCommand()));
+        final var equipment = Equipment.builder()
+            .type(request.type())
+            .brand(request.brand())
+            .model(request.model())
+            .conditionScore(request.conditionScore())
+            .purchaseDate(request.purchaseDate())
+            .build();
+
+        return EquipmentResponse.from(equipmentService.registerEquipment(equipment));
     }
 
     @GetMapping

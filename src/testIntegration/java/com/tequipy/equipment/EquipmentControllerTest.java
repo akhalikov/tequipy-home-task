@@ -1,8 +1,9 @@
 package com.tequipy.equipment;
 
-import com.tequipy.IntegrationTest;
+import com.tequipy.IntegrationTestBase;
 import com.tequipy.equipment.controller.EquipmentRegisterRequest;
 import com.tequipy.equipment.domain.EquipmentType;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
@@ -19,7 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class EquipmentControllerTest extends IntegrationTest {
+class EquipmentControllerTest extends IntegrationTestBase {
 
     @Test
     void registers_equipment() throws Exception {

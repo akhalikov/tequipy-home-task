@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
+import static java.util.Optional.ofNullable;
+
 @RestController
 @RequestMapping("/allocations")
 public class AllocationController {
@@ -40,16 +42,15 @@ public class AllocationController {
 
         final var policyItems = request.policy().stream()
             .map(policyItem -> PolicyItem.builder()
-                .allocationRequest(allocationRequest)
-                .equipmentType(policyItem.equipmentType())
-                .minConditionScore(policyItem.minConditionScore())
-                .preferredBrand(policyItem.preferredBrand())
+                .type(policyItem.equipmentType())
+                .minConditionScore(ofNullable(policyItem.minConditionScore()))
+                .preferredBrand(ofNullable(policyItem.preferredBrand()))
                 .build())
             .toList();
 
         allocationRequest.getPolicy().addAll(policyItems);
 
-        final var createdRequest = allocationService.allocate(allocationRequest);
+        final var createdRequest = allocationService.createAllocationRequest(allocationRequest);
         return AllocationResponse.from(createdRequest);
     }
 
