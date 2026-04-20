@@ -1,4 +1,4 @@
-package com.tequipy.allocation.repository;
+package com.tequipy.allocation;
 
 import com.tequipy.allocation.domain.AllocationRequest;
 import com.tequipy.allocation.error.AllocationNotFoundException;

@@ -1,8 +1,9 @@
 package com.tequipy.allocation.controller;
 
-import com.tequipy.allocation.domain.AllocationRequest;
+import com.tequipy.allocation.controller.request.AllocationRequest;
+import com.tequipy.allocation.controller.request.PolicyItemRequest;
 import com.tequipy.allocation.domain.PolicyItem;
-import com.tequipy.allocation.service.AllocationService;
+import com.tequipy.allocation.AllocationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,20 +36,15 @@ public class AllocationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public AllocationResponse createAllocation(@Valid @RequestBody AllocateEquipmentRequest request) {
-        final var allocationRequest = AllocationRequest.builder()
-            .employeeId(request.employeeId())
-            .build();
-
+    public AllocationResponse createAllocation(@Valid @RequestBody AllocationRequest request) {
         final var policyItems = request.policy().stream()
-            .map(policyItem -> PolicyItem.builder()
-                .type(policyItem.equipmentType())
-                .minConditionScore(ofNullable(policyItem.minConditionScore()))
-                .preferredBrand(ofNullable(policyItem.preferredBrand()))
-                .build())
+            .map(AllocationController::toEntityPolicyItem)
             .toList();
 
-        allocationRequest.getPolicy().addAll(policyItems);
+        final var allocationRequest = com.tequipy.allocation.domain.AllocationRequest.builder()
+            .employeeId(request.employeeId())
+            .policy(policyItems)
+            .build();
 
         final var createdRequest = allocationService.createAllocationRequest(allocationRequest);
         return AllocationResponse.from(createdRequest);
@@ -62,5 +58,13 @@ public class AllocationController {
     @PostMapping("/{id}/cancel")
     public AllocationResponse cancelAllocation(@PathVariable UUID id) {
         return AllocationResponse.from(allocationService.cancelAllocation(id));
+    }
+
+    private static PolicyItem toEntityPolicyItem(PolicyItemRequest request) {
+        return PolicyItem.builder()
+            .type(request.equipmentType())
+            .minConditionScore(ofNullable(request.minConditionScore()))
+            .preferredBrand(ofNullable(request.preferredBrand()))
+            .build();
     }
 }

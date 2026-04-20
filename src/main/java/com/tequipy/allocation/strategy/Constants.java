@@ -1,4 +1,4 @@
-package com.tequipy.allocation.service.algorithm;
+package com.tequipy.allocation.strategy;
 
 public interface Constants {
 
@@ -18,7 +18,11 @@ public interface Constants {
     long RECENCY_SCALE_DAYS = 365L * 5;
 
     /**
-     * To prevent excessive computation, we limit the number of candidate equipment items considered for each policy item.
+     * Maximum number of candidate equipment items fetched from the database per policy slot.
+     * Bounds the pessimistic lock scope: a 4-slot policy locks at most 4 × this many rows.
+     * For Backtracking algorithm, this is a critical tuning parameter: the algorithm is O(m^n)
+     * so raising this has exponential cost. In practice, a value of 10 provides a good balance between allocation
+     * success rate and performance under typical conditions.
      */
-    int MAX_CANDIDATES_PER_POLICY_ITEM = 100;
+    int CANDIDATES_PER_SLOT = 10;
 }

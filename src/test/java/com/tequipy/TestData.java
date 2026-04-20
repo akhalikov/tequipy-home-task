@@ -12,6 +12,10 @@ import static java.util.UUID.randomUUID;
 
 public class TestData {
 
+    public static String randomEmployeeId() {
+        return "employee-" + randomUUID();
+    }
+
     public static AllocationRequest allocationRequest(String employeeId) {
         return AllocationRequest.builder()
             .id(randomUUID())
@@ -22,10 +26,9 @@ public class TestData {
             .build();
     }
 
-    public static Equipment equipment() {
+    public static Equipment.EquipmentBuilder equipment() {
         return Equipment.builder()
             .id(randomUUID())
-            .type(MONITOR)
-            .build();
+            .type(MONITOR);
     }
 }

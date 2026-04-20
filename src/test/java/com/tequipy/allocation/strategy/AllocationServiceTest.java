@@ -1,9 +1,9 @@
-package com.tequipy.allocation.service;
+package com.tequipy.allocation.strategy;
 
+import com.tequipy.allocation.AllocationService;
 import com.tequipy.allocation.domain.AllocationCreatedEvent;
-import com.tequipy.allocation.repository.AllocationRequestRepository;
-import com.tequipy.allocation.service.algorithm.AllocationStrategy;
-import com.tequipy.equipment.repository.EquipmentRepository;
+import com.tequipy.allocation.AllocationRequestRepository;
+import com.tequipy.equipment.EquipmentRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationEventPublisher;
 
@@ -30,7 +30,7 @@ class AllocationServiceTest {
         // given
         var employeeId = "employee-123";
         var request = allocationRequest(employeeId);
-        var equipment = equipment();
+        var equipment = equipment().build();
         var allocated = request.allocate(List.of(equipment));
         given(allocationRequestRepository.save(request)).willReturn(allocated);
 

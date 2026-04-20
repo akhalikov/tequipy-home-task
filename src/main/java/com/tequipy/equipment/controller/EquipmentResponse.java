@@ -7,7 +7,10 @@ import com.tequipy.equipment.domain.EquipmentType;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
+
+import static java.util.Optional.ofNullable;
 
 public record EquipmentResponse(
     UUID id,
@@ -18,7 +21,8 @@ public record EquipmentResponse(
     BigDecimal conditionScore,
     LocalDate purchaseDate,
     LocalDateTime createdAt,
-    LocalDateTime updatedAt
+    LocalDateTime updatedAt,
+    Optional<String> retireReason
 ) {
     public static EquipmentResponse from(Equipment equipment) {
         return new EquipmentResponse(
@@ -30,7 +34,8 @@ public record EquipmentResponse(
             equipment.getConditionScore(),
             equipment.getPurchaseDate(),
             equipment.getCreatedAt(),
-            equipment.getUpdatedAt()
+            equipment.getUpdatedAt(),
+            ofNullable(equipment.getRetireReason())
         );
     }
 }

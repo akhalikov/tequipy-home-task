@@ -1,7 +1,6 @@
-package com.tequipy.allocation.event;
+package com.tequipy.allocation;
 
 import com.tequipy.allocation.domain.AllocationCreatedEvent;
-import com.tequipy.allocation.service.AllocationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;

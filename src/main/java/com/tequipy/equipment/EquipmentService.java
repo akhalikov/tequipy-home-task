@@ -1,12 +1,12 @@
-package com.tequipy.equipment.service;
+package com.tequipy.equipment;
 
 import com.tequipy.equipment.domain.Equipment;
 import com.tequipy.equipment.domain.EquipmentState;
-import com.tequipy.equipment.repository.EquipmentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class EquipmentService {
@@ -30,5 +30,11 @@ public class EquipmentService {
     @Transactional(readOnly = true)
     public List<Equipment> listEquipments() {
         return equipmentRepository.findAll();
+    }
+
+    @Transactional
+    public Equipment retireEquipment(UUID equipmentId, String reason) {
+        final var equipment = equipmentRepository.getBy(equipmentId);
+        return equipmentRepository.save(equipment.retire(reason));
     }
 }

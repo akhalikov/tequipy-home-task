@@ -1,10 +1,10 @@
-package com.tequipy.allocation.service.algorithm;
+package com.tequipy.allocation.algorithm;
 
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static com.tequipy.allocation.service.algorithm.ProcessingOrder.preferringSlotsWithLessCandidates;
+import static com.tequipy.allocation.strategy.ProcessingOrder.preferringSlotsWithLessCandidates;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ProcessingOrderTest {

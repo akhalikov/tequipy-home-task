@@ -1,9 +1,9 @@
 package com.tequipy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tequipy.allocation.controller.PolicyItemRequest;
-import com.tequipy.allocation.repository.AllocationRequestRepository;
-import com.tequipy.equipment.controller.EquipmentRegisterRequest;
+import com.tequipy.allocation.controller.request.AllocationRequest;
+import com.tequipy.allocation.controller.request.PolicyItemRequest;
+import com.tequipy.equipment.controller.request.EquipmentRegisterRequest;
 import com.tequipy.equipment.domain.EquipmentType;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +16,10 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
-import static com.tequipy.allocation.controller.AllocateEquipmentRequest.allocateEquipmentRequestBuilder;
-import static java.util.Collections.emptyList;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,9 +34,6 @@ public abstract class IntegrationTestBase {
     protected ObjectMapper objectMapper;
 
     @Autowired
-    protected AllocationRequestRepository allocationRequestRepository;
-
-    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @AfterEach
@@ -47,7 +42,7 @@ public abstract class IntegrationTestBase {
     }
 
     protected UUID createAllocationRequest(String employeeId, PolicyItemRequest... policyItems) throws Exception {
-        var request = allocateEquipmentRequestBuilder()
+        var request = AllocationRequest.builder()
             .employeeId(employeeId)
             .policy(List.of(policyItems))
             .build();
@@ -79,9 +74,11 @@ public abstract class IntegrationTestBase {
         return idFrom(result);
     }
 
-    protected void allocateEquipment(UUID requestId) {
-        final var updated = allocationRequestRepository.getBy(requestId).allocate(emptyList());
-        allocationRequestRepository.save(updated);
+    protected void retireEquipment(UUID id, String reason) throws Exception {
+        mockMvc.perform(post("/equipments/{id}/retire", id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("reason", reason))))
+            .andExpect(status().isOk());
     }
 
     protected UUID idFrom(MvcResult result) throws Exception {

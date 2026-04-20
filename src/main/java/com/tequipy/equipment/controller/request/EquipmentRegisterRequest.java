@@ -1,4 +1,4 @@
-package com.tequipy.equipment.controller;
+package com.tequipy.equipment.controller.request;
 
 import com.tequipy.equipment.domain.EquipmentType;
 import jakarta.validation.constraints.DecimalMax;

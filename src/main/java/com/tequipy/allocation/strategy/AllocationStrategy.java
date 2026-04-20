@@ -1,4 +1,4 @@
-package com.tequipy.allocation.service.algorithm;
+package com.tequipy.allocation.strategy;
 
 import com.tequipy.allocation.domain.PolicyItem;
 import com.tequipy.equipment.domain.Equipment;

@@ -1,6 +1,7 @@
 package com.tequipy.allocation.domain;
 
 import com.tequipy.equipment.domain.Equipment;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -21,7 +22,6 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
-import io.hypersistence.utils.hibernate.type.json.JsonType;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -44,7 +44,6 @@ import static jakarta.persistence.FetchType.LAZY;
     @Index(name = "idx_allocation_employee", columnList = "employee_id")
 })
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -87,12 +86,23 @@ public class AllocationRequest {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public AllocationRequest allocate(Collection<Equipment> equipment) {
-        if (equipment.isEmpty())
-            throw new IllegalArgumentException("equipment is empty");
+    public boolean is(AllocationState state) {
+        return this.state == state;
+    }
 
-        if (state != PENDING)
-            throw new IllegalStateException("Cannot allocate in state: " + state);
+    public boolean isOneOf(AllocationState... state) {
+        return Set.of(state).contains(this.state);
+    }
+
+    public AllocationRequest allocate(Collection<Equipment> equipment) {
+        if (is(ALLOCATED) && this.allocatedEquipments.containsAll(equipment) && equipment.containsAll(this.allocatedEquipments))
+            return this;
+
+        if (equipment.isEmpty())
+            throw new IllegalArgumentException("Equipment can not be empty");
+
+        if (!is(PENDING))
+            throw new IllegalStateException("Can't allocate in state: " + state);
 
         this.allocatedEquipments.addAll(equipment);
         this.state = ALLOCATED;
@@ -100,8 +110,11 @@ public class AllocationRequest {
     }
 
     public AllocationRequest confirm() {
-        if (state != ALLOCATED)
-            throw new IllegalStateException("Cannot confirm allocation in state: " + state);
+        if (is(CONFIRMED))
+            return this;
+
+        if (!is(ALLOCATED))
+            throw new IllegalStateException("Can't confirm allocation in state: " + state);
 
         getAllocatedEquipments().forEach(Equipment::assign);
         this.state = CONFIRMED;
@@ -109,8 +122,11 @@ public class AllocationRequest {
     }
 
     public AllocationRequest cancel() {
-        if (state != PENDING && state != ALLOCATED)
-            throw new IllegalStateException("Cannot confirm allocation in state: " + state);
+        if (is(CANCELLED))
+            return this;
+
+        if (!isOneOf(PENDING, ALLOCATED))
+            throw new IllegalStateException("Can't cancel allocation in state: " + state);
 
         getAllocatedEquipments().forEach(Equipment::markAvailable);
         this.state = CANCELLED;
@@ -118,8 +134,11 @@ public class AllocationRequest {
     }
 
     public AllocationRequest fail(String reason) {
-        if (state != PENDING)
-            throw new IllegalStateException("Cannot fail allocation in state: " + state);
+        if (is(FAILED) && this.failureReason.equals(reason))
+            return this;
+
+        if (!is(PENDING))
+            throw new IllegalStateException("Can't fail allocation in state: " + state);
 
         this.failureReason = reason;
         this.state = FAILED;

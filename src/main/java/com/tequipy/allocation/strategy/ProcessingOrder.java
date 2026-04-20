@@ -1,4 +1,4 @@
-package com.tequipy.allocation.service.algorithm;
+package com.tequipy.allocation.strategy;
 
 import java.util.ArrayList;
 import java.util.List;

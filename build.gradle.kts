@@ -24,10 +24,16 @@ sourceSets {
         compileClasspath += sourceSets.main.get().output
         runtimeClasspath += sourceSets.main.get().output
     }
+    create("testPerformance") {
+        compileClasspath += sourceSets.main.get().output
+        runtimeClasspath += sourceSets.main.get().output
+    }
 }
 
 configurations["testIntegrationImplementation"].extendsFrom(configurations.testImplementation.get())
 configurations["testIntegrationRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.get())
+configurations["testPerformanceImplementation"].extendsFrom(configurations.testImplementation.get())
+configurations["testPerformanceRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.get())
 
 repositories {
     mavenCentral()
@@ -48,6 +54,8 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     "testIntegrationRuntimeOnly"("com.h2database:h2")
     "testIntegrationImplementation"("org.awaitility:awaitility:4.2.1")
+    "testPerformanceRuntimeOnly"("com.h2database:h2")
+    "testPerformanceImplementation"("org.awaitility:awaitility:4.2.1")
 }
 
 tasks.withType<Test> {
@@ -63,3 +71,14 @@ tasks.register<Test>("testIntegration") {
 }
 
 tasks.check { dependsOn("testIntegration") }
+
+tasks.register<Test>("testPerformance") {
+    description = "Runs performance tests."
+    group = "verification"
+    testClassesDirs = sourceSets["testPerformance"].output.classesDirs
+    classpath = sourceSets["testPerformance"].runtimeClasspath
+    shouldRunAfter("testIntegration")
+    testLogging {
+        showStandardStreams = true
+    }
+}
