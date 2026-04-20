@@ -21,6 +21,7 @@ Read the full task, API and data model description in [TODO.md](TODO.md)
 - Only `AVAILABLE` items are considered for allocation.
 - Only `RESERVED` can be assigned.
 - Only `AVAILABLE` items can be retired. If item us `RESERVED` it must be unassigned first. This simplifies the state machine and prevents edge cases where an item is retired while still assigned to an employee.
+- Retired equipment cannot be made available again.
 
 ### `AllocationRequest` state model:
 - Only `PENDING` requests can be considered for allocation.

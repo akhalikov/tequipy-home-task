@@ -1,8 +1,10 @@
 package com.tequipy;
 
 import com.tequipy.allocation.domain.AllocationRequest;
+import com.tequipy.allocation.domain.AllocationRequest.AllocationRequestBuilder;
 import com.tequipy.allocation.domain.PolicyItem;
 import com.tequipy.equipment.domain.Equipment;
+import com.tequipy.equipment.domain.Equipment.EquipmentBuilder;
 
 import java.util.List;
 
@@ -16,17 +18,16 @@ public class TestData {
         return "employee-" + randomUUID();
     }
 
-    public static AllocationRequest allocationRequest(String employeeId) {
+    public static AllocationRequestBuilder allocationRequest(String employeeId) {
         return AllocationRequest.builder()
             .id(randomUUID())
             .createdAt(now())
             .updatedAt(now())
             .employeeId(employeeId)
-            .policy(List.of(PolicyItem.builder().type(MONITOR).build()))
-            .build();
+            .policy(List.of(PolicyItem.builder().type(MONITOR).build()));
     }
 
-    public static Equipment.EquipmentBuilder equipment() {
+    public static EquipmentBuilder equipment() {
         return Equipment.builder()
             .id(randomUUID())
             .type(MONITOR);

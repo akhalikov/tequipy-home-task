@@ -9,6 +9,7 @@ import static com.tequipy.TestData.equipment;
 import static com.tequipy.equipment.domain.EquipmentState.ASSIGNED;
 import static com.tequipy.equipment.domain.EquipmentState.AVAILABLE;
 import static com.tequipy.equipment.domain.EquipmentState.RESERVED;
+import static com.tequipy.equipment.domain.EquipmentState.RETIRED;
 import static com.tequipy.equipment.domain.EquipmentType.MONITOR;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -87,11 +88,10 @@ class EquipmentTest {
     @Nested
     class MarkAvailableTests {
 
-        @ParameterizedTest
-        @EnumSource(value = EquipmentState.class, names = {"ASSIGNED", "RESERVED"})
-        void marks_equipment_as_available(EquipmentState state) {
+        @Test
+        void marks_reserved_equipment_as_available() {
             // given
-            var equipment = equipment().type(MONITOR).state(state).build();
+            var equipment = equipment().type(MONITOR).state(RESERVED).build();
 
             // when
             var available = equipment.markAvailable();
@@ -111,6 +111,18 @@ class EquipmentTest {
             // when
             assertThat(result).isSameAs(equipment);
         }
+
+        @ParameterizedTest
+        @EnumSource(value = EquipmentState.class, names = {"RESERVED", "ASSIGNED", "AVAILABLE"}, mode = EXCLUDE)
+        void throws_error_when_equipment_is_in_invalid_state(EquipmentState state) {
+            // given
+            var equipment = equipment().type(MONITOR).state(state).build();
+
+            // when / then
+            assertThatThrownBy(equipment::markAvailable)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Cannot mark available in state: %s", state);
+        }
     }
 
     @Nested
@@ -127,14 +139,14 @@ class EquipmentTest {
             var retired = equipment.retire(reason);
 
             // then
-            assertThat(retired.getState()).isEqualTo(EquipmentState.RETIRED);
+            assertThat(retired.getState()).isEqualTo(RETIRED);
             assertThat(retired.getRetireReason()).isEqualTo(reason);
         }
 
         @Test
         void returns_same_instance_when_already_retired() {
             // given
-            var equipment = equipment().type(MONITOR).state(EquipmentState.RETIRED).build();
+            var equipment = equipment().type(MONITOR).state(RETIRED).build();
 
             // when
             var result = equipment.retire(reason);

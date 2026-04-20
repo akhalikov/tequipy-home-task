@@ -5,19 +5,18 @@ import com.tequipy.equipment.domain.EquipmentType;
 import lombok.Builder;
 
 import java.math.BigDecimal;
-import java.util.Optional;
+
+import static java.util.Optional.ofNullable;
 
 @Builder
-public record PolicyItem(EquipmentType type,
-                         Optional<BigDecimal> minConditionScore,
-                         Optional<String> preferredBrand) {
+public record PolicyItem(EquipmentType type, BigDecimal minConditionScore, String preferredBrand) {
 
     public boolean isSatisfiedBy(Equipment equipment) {
         return equipment.isSameType(type)
-            && minConditionScore.map(equipment::hasSufficientCondition).orElse(true);
+            && (ofNullable(minConditionScore).map(equipment::hasSufficientCondition).orElse(true));
     }
 
     public boolean isOfPreferredBrand(Equipment equipment) {
-        return preferredBrand.map(equipment::isSameBrand).orElse(false);
+        return ofNullable(preferredBrand).map(equipment::isSameBrand).orElse(false);
     }
 }

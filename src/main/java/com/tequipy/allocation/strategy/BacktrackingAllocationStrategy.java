@@ -133,8 +133,9 @@ public class BacktrackingAllocationStrategy implements AllocationStrategy {
                 depth + 1, policyItems, candidates, suffixMaxScores, current, usedEquipmentIds,
                 currentScore + scoreEquipment(policyItem, equipment), bestScoreSoFar);
 
-            if (bestResultSoFar == null || (result != null && result.totalScore() > bestResultSoFar.totalScore())) {
+            if (result != null && (bestResultSoFar == null || result.totalScore() > bestResultSoFar.totalScore())) {
                 bestResultSoFar = result;
+                bestScoreSoFar[0] = bestResultSoFar.totalScore();
             }
 
             current.remove(depth);

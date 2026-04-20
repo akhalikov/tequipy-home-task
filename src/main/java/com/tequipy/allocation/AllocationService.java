@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import static com.tequipy.allocation.domain.AllocationState.PENDING;
 import static com.tequipy.allocation.strategy.Constants.CANDIDATES_PER_SLOT;
 import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toSet;
 
 @Service
@@ -84,7 +85,7 @@ public class AllocationService {
     }
 
     private Collection<Equipment> findCandidatesForPolicy(List<PolicyItem> policy) {
-        final var slotsPerType = policy.stream().collect(Collectors.groupingBy(PolicyItem::type, counting()));
+        final var slotsPerType = policy.stream().collect(groupingBy(PolicyItem::type, counting()));
         return slotsPerType.entrySet().stream()
             .flatMap(entry -> equipmentRepository.findTopAvailableByTypeWithLock(entry.getKey(), PageRequest.of(0, limitFor(entry.getValue()))).stream())
             .collect(toSet());

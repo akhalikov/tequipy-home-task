@@ -1,9 +1,9 @@
 package com.tequipy.allocation.controller;
 
+import com.tequipy.allocation.AllocationService;
 import com.tequipy.allocation.controller.request.AllocationRequest;
 import com.tequipy.allocation.controller.request.PolicyItemRequest;
 import com.tequipy.allocation.domain.PolicyItem;
-import com.tequipy.allocation.AllocationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,8 +15,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
-
-import static java.util.Optional.ofNullable;
 
 @RestController
 @RequestMapping("/allocations")
@@ -63,8 +61,8 @@ public class AllocationController {
     private static PolicyItem toEntityPolicyItem(PolicyItemRequest request) {
         return PolicyItem.builder()
             .type(request.equipmentType())
-            .minConditionScore(ofNullable(request.minConditionScore()))
-            .preferredBrand(ofNullable(request.preferredBrand()))
+            .minConditionScore(request.minConditionScore())
+            .preferredBrand(request.preferredBrand())
             .build();
     }
 }

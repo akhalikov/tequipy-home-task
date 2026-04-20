@@ -98,6 +98,9 @@ public class Equipment {
         if (is(AVAILABLE))
             return this;
 
+        if (!is(RESERVED) && !is(ASSIGNED))
+            throw new IllegalStateException("Cannot mark available in state: " + state);
+
         state = AVAILABLE;
         return this;
     }
