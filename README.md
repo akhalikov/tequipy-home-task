@@ -16,6 +16,18 @@ Read the full task, API and data model description in [TODO.md](TODO.md)
 ./gradlew testPerformance
 ```
 
+## API Endpoints
+
+| Method | Path                         | Description                                | Response Status      |
+|--------|------------------------------|--------------------------------------------|----------------------|
+| POST   | `/equipments`                | Register a new equipment                   | 201 Created          |
+| GET    | `/equipments`                | List equipments, filter by status          | 200 OK               |
+| POST   | `/equipments/{id}/retire`    | Retire equipment with a reason             | 200 OK               |
+| POST   | `/allocations`               | Create request, trigger async allocation   | 201 Created          |
+| GET    | `/allocations/{id}`          | Get status and allocated equipments        | 200 OK               |
+| POST   | `/allocations/{id}/confirm`  | Confirm — equipments transition to assigned | 200 OK              |
+| POST   | `/allocations/{id}/cancel`   | Cancel — release equipments back to available | 200 OK            |
+
 ## Important Assumptions & Design Decisions
 ### `Equipment` state model:
 - Only `AVAILABLE` items are considered for allocation.
@@ -135,3 +147,73 @@ concurrent requests without serialising unrelated allocations.
 End-to-end latency includes two HTTP round-trips (POST + polling GET), async dispatch, the
 database lock query, and equipment saves. 
 The algorithm itself accounts for < 1 ms of this budget.
+
+### Examples
+
+#### Example 1: Policy for graphical designer with two monitor slots, one preferring Apple
+
+Policy:
+- Slot 1: `MONITOR, preferredBrand=Apple (soft)`
+- Slot 2: `MONITOR`
+
+Equipment pool:
+```
+Monitor A: Apple, condition=0.9 → score for slot 1 = 0.9 + 0.6 = 1.5
+Monitor B: Dell, condition=0.8  → score for slot 1 = 0.8
+Monitor C: Dell, condition=0.7  → score for slot 1 = 0.7
+```
+
+- **Step 1** 
+  - Fetching all monitors from the database locking the records as per pessimistic lock.
+- **Step 2**
+  - Apply `most-constrained-first`: the ordering has no effect here — both slots have the same number of candidates (3), 
+  so the original order is preserved.
+- **Step 3**
+```
+Slot 1 = Monitor A (score=1.5)
+  └─ Slot 2 = Monitor B (score=0.8) → total=2.3 ✓ saved
+  └─ Slot 2 = Monitor C (score=0.7) → total=2.2 < 2.3, not better
+
+Slot 1 = Monitor B (score=0.8)
+  └─ branch-and-bound: max possible = 0.8 + 1.5 = 2.3
+     upper bound 2.3 does not exceed current best 2.3 → pruned (equal score, no improvement possible)
+
+Slot 1 = Monitor C (score=0.7)
+  └─ branch-and-bound: max possible = 0.7 + 1.5 = 2.2 < 2.3 → pruned ✗
+```
+
+Result: Slot 1 → Monitor A, Slot 2 → Monitor B, total score = 2.3.
+
+#### Example 2: Shows that Greedy can fail to find a valid assignment
+
+Policy:
+- Slot 1: `MONITOR, preferredBrand=Apple (soft)`
+- Slot 2: `MONITOR, minConditionScore=0.8 (hard)`
+
+Equipment pool:
+```
+Monitor A: Apple, condition=0.9
+Monitor B: Dell, condition=0.7
+Monitor C: Dell, condition=0.6
+```
+
+**Greedy:**
+
+```
+Slot 1: Monitor A: 0.9 + 0.6 (apple bonus) = 1.5  ← save, best score ✓
+  
+Slot 2: minConditionScore=0.8, remained B (0.7) and C (0.6)
+    No candidates satisfy hard constraint → allocation fails ✗
+```
+
+**Backtracking:**
+```
+Slot 2 goes first (most-constrained-first):
+  Only Monitor A satisfies minConditionScore=0.8
+  → Slot 2 = Monitor A (the only candidate) ✓
+
+Slot 1: remained B and C
+  Monitor B: score=0.8 → save (best from remained candidates) ✓
+```
+
+Result: Slot 2 → Monitor A, Slot 1 → Monitor B, total score = 1.7.

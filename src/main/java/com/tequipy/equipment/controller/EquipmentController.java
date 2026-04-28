@@ -1,10 +1,10 @@
 package com.tequipy.equipment.controller;
 
+import com.tequipy.equipment.EquipmentService;
 import com.tequipy.equipment.controller.request.EquipmentRegisterRequest;
 import com.tequipy.equipment.controller.request.EquipmentRetireRequest;
 import com.tequipy.equipment.domain.Equipment;
 import com.tequipy.equipment.domain.EquipmentState;
-import com.tequipy.equipment.EquipmentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,8 +54,7 @@ public class EquipmentController {
             .toList();
     }
 
-    @PostMapping
-    @RequestMapping("/{id}/retire")
+    @PostMapping("/{id}/retire")
     public EquipmentResponse retireEquipment(@PathVariable UUID id, @Valid @RequestBody EquipmentRetireRequest request) {
         final var result = equipmentService.retireEquipment(id, request.reason());
         return EquipmentResponse.from(result);

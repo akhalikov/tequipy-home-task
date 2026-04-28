@@ -34,6 +34,18 @@ public class BacktrackingAllocationStrategy implements AllocationStrategy {
     private static final int INITIAL_DEPTH = 0;
     private static final double INITIAL_SCORE = 0.0;
 
+    /**
+     * Selects the optimal set of available equipment for a given allocation policy.
+     * <p>
+     * Filters candidates by hard constraints, sorts slots in most-constrained-first order,
+     * precomputes suffix scores for branch-and-bound pruning, then delegates to {@link #backtrack}.
+     *
+     * @param policy    list of policy slots defining required equipment types and constraints
+     * @param equipment pool of available equipment to allocate from
+     *
+     * @return {@link AllocationResult.Success} with the optimal assignment, or {@link AllocationResult.Failure}
+     *         if no valid assignment exists.
+     */
     @Override
     public AllocationResult allocate(List<PolicyItem> policy, Collection<Equipment> equipment) {
         if (equipment.isEmpty())
@@ -42,6 +54,11 @@ public class BacktrackingAllocationStrategy implements AllocationStrategy {
         log.debug("Running allocation: availableEquipment={} policy={}", equipment.size(), policy);
         final var candidates = findEligibleEquipment(policy, equipment);
 
+        // TODO: This check only guards against zero candidates per slot type.
+        // It does not detect cross-slot contention (e.g. 2 MONITOR slots but only 1 monitor available).
+        // Such cases are handled correctly by backtracking (returns failure), but at the cost of
+        // running the full search. A pre-check comparing slot counts vs available counts per type
+        // would fail fast without entering the recursion.
         for (int i = 0; i < policy.size(); i++) {
             if (candidates.get(i).isEmpty()) {
                 return failure("No available equipment of type: " + policy.get(i).type());
@@ -64,9 +81,19 @@ public class BacktrackingAllocationStrategy implements AllocationStrategy {
             bestScoreSoFar);
     }
 
+    /**
+     * Filters and ranks equipment candidates for each policy slot.
+     * <p>
+     * For each slot, retains only equipment satisfying hard constraints ({@link PolicyItem#isSatisfiedBy}),
+     * sorts by score descending, and caps at {@link Constants#CANDIDATES_PER_SLOT} to bound the search space.
+     *
+     * @param policyItems list of policy slots to find candidates for
+     * @param available   pool of available equipment to filter from
+     * @return per-slot list of eligible equipment, ordered by score DESC; candidates.get(i) corresponds to policyItems.get(i)
+     */
     private List<List<Equipment>> findEligibleEquipment(List<PolicyItem> policyItems, Collection<Equipment> available) {
-        final List<List<Equipment>> candidates = new ArrayList<>(policyItems.size());
-        for (PolicyItem policyItem : policyItems) {
+        final var candidates = new ArrayList<List<Equipment>>(policyItems.size());
+        for (var policyItem : policyItems) {
             final var eligible = available.stream()
                 .filter(policyItem::isSatisfiedBy)
                 .sorted(comparing((Equipment e) -> scoreEquipment(policyItem, e)).reversed())
@@ -78,6 +105,17 @@ public class BacktrackingAllocationStrategy implements AllocationStrategy {
         return candidates;
     }
 
+    /**
+     * Precomputes suffix upper-bound scores for branch-and-bound pruning.
+     * <p>
+     * {@code suffixMaxScores[i]} holds the theoretical maximum total score achievable
+     * for slots {@code i...n-1}, assuming each slot gets its highest-scoring candidate independently.
+     * Since candidates are pre-sorted DESC, index 0 of each slot's list is always the max.
+     *
+     * @param policyItems list of policy slots in processing order
+     * @param candidates  per-slot candidate lists, each sorted by score DESC
+     * @return array where index {@code i} contains the upper-bound score sum for slots {@code i...n-1}
+     */
     private double[] computeSuffixMaxScores(List<PolicyItem> policyItems, List<List<Equipment>> candidates) {
         int n = policyItems.size();
         double[] suffixMaxScores = new double[n];
@@ -89,6 +127,20 @@ public class BacktrackingAllocationStrategy implements AllocationStrategy {
         return suffixMaxScores;
     }
 
+    /**
+     * Computes a composite quality score for assigning a specific piece of equipment to a policy slot.
+     * <p>
+     * Score components:
+     * <ul>
+     *   <li><b>Condition</b> — equipment condition score (0.0–1.0), always included</li>
+     *   <li><b>Brand preference</b> — adds {@link Constants#BRAND_PREFERENCE_WEIGHT} if equipment matches preferred brand</li>
+     *   <li><b>Recency</b> — linear decay over {@link Constants#RECENCY_SCALE_DAYS}; newer equipment scores higher</li>
+     * </ul>
+     *
+     * @param policyItem policy slot providing soft preference constraints
+     * @param equipment  equipment being evaluated
+     * @return composite score; higher is better
+     */
     private static double scoreEquipment(PolicyItem policyItem, Equipment equipment) {
         double score = equipment.getConditionScore().doubleValue();
         if (policyItem.isOfPreferredBrand(equipment))
@@ -100,6 +152,27 @@ public class BacktrackingAllocationStrategy implements AllocationStrategy {
         return score;
     }
 
+    /**
+     * Backtracking with branch-and-bound
+     * <p>
+     * Explores all candidate combinations recursively. Slots are processed in **most-constrained-first** order
+     * (fewest candidates first) to prune dead branches early. **Branch-and-bound** cuts any subtree whose upper-bound
+     * score (sum of each remaining slot's best possible score) cannot beat the best complete assignment found so far.
+     *
+     * @param depth            current slot index being assigned (0-based); equals policy size when a complete assignment is found
+     * @param policyItems      policy slots sorted in most-constrained-first order
+     * @param candidates       per-slot list of eligible equipment, pre-filtered by hard constraints and sorted by score DESC;
+     *                         candidates.get(i) corresponds to policyItems.get(i)
+     * @param suffixMaxScores  precomputed upper-bound scores: suffixMaxScores[i] is the sum of the best possible scores
+     *                         for slots i...n-1, used for branch-and-bound pruning
+     * @param current          mutable map of slot index → equipment for the assignment being explored; cleared on backtrack
+     * @param usedEquipmentIds set of equipment IDs already assigned in the current path; prevents double-allocation across slots
+     * @param currentScore     accumulated score for the current partial assignment
+     * @param bestScoreSoFar   single-element array holding the best complete assignment score found so far;
+     *                         array instead of primitive to allow mutation across recursive calls
+     *
+     * @return the best complete assignment found in this subtree, or null if no valid assignment exists.
+     */
     private Success backtrack(int depth,
                               List<PolicyItem> policyItems,
                               List<List<Equipment>> candidates,
